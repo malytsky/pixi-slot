@@ -9,6 +9,8 @@ export class SlotUI {
   private spinBtn: HTMLButtonElement;
   private stopBtn: HTMLButtonElement;
   private betSelect: HTMLSelectElement;
+  private autoBtn: HTMLButtonElement;
+  private autoStopBtn: HTMLButtonElement;
 
   constructor(private vm: SlotViewModel, parent: HTMLElement) {
     // ── Создание DOM элементов ──
@@ -22,6 +24,11 @@ export class SlotUI {
 
     this.stopBtn = document.createElement('button');
     this.stopBtn.textContent = 'STOP';
+
+    this.autoBtn = document.createElement('button');
+    this.autoBtn.textContent = 'AUTO 5 SPINS';
+    this.autoStopBtn = document.createElement('button');
+    this.autoStopBtn.textContent = 'STOP AUTO';
 
     this.betSelect = document.createElement('select');
     this.vm.model.bets.forEach(b => {
@@ -40,8 +47,12 @@ export class SlotUI {
     parent.appendChild(this.betSelect);
     parent.appendChild(this.spinBtn);
     parent.appendChild(this.stopBtn);
+    parent.appendChild(this.autoBtn);
+    parent.appendChild(this.autoStopBtn);
 
     // ── События ──
+    this.autoBtn.addEventListener('click', () => vm.startAuto(5));
+    this.autoStopBtn.addEventListener('click', () => vm.stopAuto());
     this.spinBtn.addEventListener('click', () => vm.startSpin());
     this.stopBtn.addEventListener('click', () => vm.stopSpin());
     this.betSelect.addEventListener('change', () => {
@@ -62,5 +73,7 @@ export class SlotUI {
     this.spinBtn.disabled = this.vm.phase !== 'idle';
     this.stopBtn.disabled = this.vm.phase !== 'spinning';
     this.betSelect.disabled = this.vm.phase !== 'idle';
+    this.autoBtn.disabled = this.vm.phase !== 'idle';
+    this.autoStopBtn.disabled = this.vm.phase === 'idle';
   }
 }

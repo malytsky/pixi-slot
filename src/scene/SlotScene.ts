@@ -1,8 +1,10 @@
 import * as PIXI from 'pixi.js';
 import { SlotViewModel } from '../view-model/SlotViewModel';
 import { gsap } from "gsap";
+import {mockSpin} from "../mock/spinMock.ts";
+import {SlotStateMachine} from "./SlotStateMachine.ts";
 
-const SYMBOLS = ['A', 'B', 'C', 'D', 'E'];
+const SYMBOLS = ['B', 'C', 'D', 'E'];
 const ROWS = 3;
 const REEL_WIDTH = 110;
 const SYMBOL_HEIGHT = 120;
@@ -16,6 +18,7 @@ class Reel {
     private stopping = false;
     private forceStopping = false;
     private stoppingDone = false;
+    private symbolsY:number[] = [];
 
     constructor(x: number) {
         this.container.x = x;
@@ -29,10 +32,27 @@ class Reel {
         }
     }
 
-    start() {
+    start(symbols:any) {
+        console.log(symbols)
         this.speed = this.maxSpeed;
         this.stopping = false;
         this.stoppingDone = false;
+        this.forceStopping = false;
+        this.container.removeChildren();
+        this.symbols = [];
+        this.symbolsY = [];
+
+        // создаём ROWS + 2 запасных символа
+        for (let i = 0; i < ROWS + 2; i++) {
+            const t = new PIXI.Text(this.randomSymbol(), { fill: 'white', fontSize: 64 });
+            t.y = i * SYMBOL_HEIGHT;
+            this.container.addChild(t);
+            this.symbols.push(t);
+        }
+
+        for (let i = 0; i < this.symbols.length; i++) {
+            this.symbolsY.push(i * SYMBOL_HEIGHT);
+        }
     }
 
     stop() {
@@ -45,16 +65,24 @@ class Reel {
 
     update() {
         if (this.forceStopping) {
+            let Y = 0;
+            // при остановке корректируем символы до точной сетки
             for (let i = 0; i < this.symbols.length; i++) {
-                this.symbols[i].y = i * SYMBOL_HEIGHT;
+                for (let j = 0; i < this.symbolsY.length; j++) {
+                    if (this.symbols[i].y <= this.symbolsY[j]) {
+                        Y = this.symbolsY[j];
+                        break;
+                    }
+                }
+                gsap.to(this.symbols[i], {y: Y, duration: 0.5, ease: "back.out(2)"});
             }
             this.speed = 0;
             this.stoppingDone = true;
-            this.forceStopping = false;
             return;
         }
 
         if (this.speed > 0.1) {
+            console.log(this.speed)
             // сдвигаем символы на speed
             for (const s of this.symbols) {
                 s.y += this.speed;
@@ -64,16 +92,19 @@ class Reel {
             for (const s of this.symbols) {
                 if (s.y >= (ROWS + 1) * SYMBOL_HEIGHT) {
                     s.y -= (ROWS + 2) * SYMBOL_HEIGHT;
+                    console.log("this.speed", this.speed)
                     s.text = this.randomSymbol();
                 }
             }
 
             // замедление
             if (this.stopping) {
+                console.log("stopping")
                 this.speed = Math.max(0, this.speed - this.deceleration);
             }
         }
         else if (!this.stoppingDone) {
+            console.log("stop")
             // при остановке корректируем символы до точной сетки
             for (let i = 0; i < this.symbols.length; i++) {
                 gsap.to(this.symbols[i], {y: i * SYMBOL_HEIGHT, duration: 1, ease: "back.out(2)"});
@@ -97,6 +128,8 @@ export class SlotScene {
     container = new PIXI.Container();
     private reels: Reel[] = [];
     private spinEndTime = 0;
+    private sm:SlotStateMachine;
+    private data:object;
 
     constructor(private vm: SlotViewModel) {
         for (let i = 0; i < 5; i++) {
@@ -107,20 +140,28 @@ export class SlotScene {
 
         // подписка на фазу спина
         this.vm.subscribe(() => this.onVMChange());
+        this.sm = new SlotStateMachine(vm, this);
     }
 
     private onVMChange() {
         if (this.vm.phase === 'spinning') {
-            this.reels.forEach(r => r.start());
+            this.data = mockSpin(this.vm.bet);
+            for (let i = 0; i < this.reels.length; i++) {
+                this.reels[i].start(this.data["reel" + i]);
+            }
+            //this.reels.forEach(r => r.start());
             this.spinEndTime = performance.now() + 1500; // авто-стоп через 1.5 сек
         }
 
         if (this.vm.stopRequested) {
-            this.reels.forEach(r => r.stop());
+            console.log("STOP")
+            this.reels.forEach(r => r.forceStop());
         }
     }
 
     update() {
+        this.sm.update();
+
         if (this.vm.phase !== 'spinning') return;
 
         const now = performance.now();
@@ -138,8 +179,8 @@ export class SlotScene {
 
         // проверка, остановились ли все рилы
         if (this.reels.every(r => r.stopped)) {
-            const win = Math.random() > 0.7 ? this.vm.bet * 5 : 0;
-            this.vm.finishSpin(win);
+            this.vm.phase = 'showWin';
+            this.vm.finishSpin(this.data.win);
         }
     }
 }

@@ -15,13 +15,14 @@ export class SlotStateMachine {
 
         switch (this.vm.phase) {
             case 'idle':
-                if (this.vm.autoPlay) this.vm.spin();
+                console.log("idle");
+                //if (this.vm.autoPlay) this.vm.spin();
                 break;
             case 'spinning':
-                this.scene.startSpin();
+                //this.scene.startSpin();
                 break;
             case 'win':
-                this.scene.showWin();
+                //this.scene.showWin();
                 break;
         }
     }
