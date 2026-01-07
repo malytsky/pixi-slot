@@ -61,11 +61,7 @@ class Reel {
         else if (!this.stoppingDone) {
             // при остановке корректируем символы до точной сетки
             for (let i = 0; i < this.symbols.length; i++) {
-                gsap.to(this.symbols[i], {
-                    y: i * SYMBOL_HEIGHT,
-                    duration: 0.5 + Math.random() * 0.5,
-                    ease: "back.out(2)"
-                });
+                gsap.to(this.symbols[i], {y: i * SYMBOL_HEIGHT, duration: 1, ease: "back.out(2)"});
             }
             this.speed = 0;
             this.stoppingDone = true;
