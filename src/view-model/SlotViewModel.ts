@@ -7,6 +7,7 @@ export class SlotViewModel {
 
     phase: Phase = 'idle';
     stopRequested = false;
+    forceStop = false;
 
     constructor(public model: SlotModel) {}
 
@@ -20,6 +21,7 @@ export class SlotViewModel {
 
     startSpin() {
         if (this.phase !== 'idle') return;
+        this.forceStop = false;
         this.model.takeBet();
         this.stopRequested = false;
         this.phase = 'spinning';
@@ -28,7 +30,7 @@ export class SlotViewModel {
 
     stopSpin() {
         if (this.phase !== 'spinning') return;
-        this.stopRequested = true;
+        this.forceStop = true;
     }
 
     finishSpin(win: number) {

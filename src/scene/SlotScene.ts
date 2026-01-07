@@ -14,6 +14,7 @@ class Reel {
     readonly maxSpeed = 18;
     readonly deceleration = 1.2;
     private stopping = false;
+    private forceStopping = false;
     private stoppingDone = false;
 
     constructor(x: number) {
@@ -38,7 +39,21 @@ class Reel {
         this.stopping = true;
     }
 
+    forceStop() {
+        this.forceStopping = true;
+    }
+
     update() {
+        if (this.forceStopping) {
+            for (let i = 0; i < this.symbols.length; i++) {
+                this.symbols[i].y = i * SYMBOL_HEIGHT;
+            }
+            this.speed = 0;
+            this.stoppingDone = true;
+            this.forceStopping = false;
+            return;
+        }
+
         if (this.speed > 0.1) {
             // сдвигаем символы на speed
             for (const s of this.symbols) {
@@ -111,8 +126,12 @@ export class SlotScene {
         const now = performance.now();
 
         // автоматическая остановка после времени
-        if (!this.vm.stopRequested && now >= this.spinEndTime) {
+        if (now >= this.spinEndTime) {
             this.reels.forEach(r => r.stop());
+        }
+
+        if (this.vm.forceStop) {
+            this.reels.forEach(r => r.forceStop());
         }
 
         this.reels.forEach(r => r.update());
