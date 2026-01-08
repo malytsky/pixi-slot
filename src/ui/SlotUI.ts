@@ -12,7 +12,10 @@ export class SlotUI {
   private autoBtn: HTMLButtonElement;
   private autoStopBtn: HTMLButtonElement;
 
-  constructor(private vm: SlotViewModel, parent: HTMLElement) {
+  private vm: SlotViewModel;
+
+  constructor(vm: SlotViewModel, parent: HTMLElement) {
+    this.vm = vm;
     // ── Создание DOM элементов ──
     this.balanceEl = document.createElement('div');
     this.betEl = document.createElement('div');

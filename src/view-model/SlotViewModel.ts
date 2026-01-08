@@ -1,16 +1,19 @@
-import { SlotModel } from '../domain/SlotModel';
+import type {SlotModel} from "../domain/SlotModel";
 
 export type Phase = 'idle' | 'spinning' | 'showWin';
 
 export class SlotViewModel {
     private subscribers: (() => void)[] = [];
+    public model: SlotModel;
+
     phase: Phase = 'idle';
     stopRequested = false;
-    forceStop = false;
 
     private autoSpinsRemaining = 0;
 
-    constructor(public model: SlotModel) {}
+    constructor(model: SlotModel) {
+        this.model = model;
+    }
 
     subscribe(fn: () => void) {
         this.subscribers.push(fn);
@@ -22,7 +25,7 @@ export class SlotViewModel {
 
     startSpin() {
         if (this.phase !== 'idle') return;
-        this.forceStop = false;
+
         this.model.takeBet();
         this.stopRequested = false;
         this.phase = 'spinning';
@@ -31,7 +34,7 @@ export class SlotViewModel {
 
     stopSpin() {
         if (this.phase !== 'spinning') return;
-        this.stopRequested = true; // теперь корректно уведомляем сцену
+        this.stopRequested = true;
         this.notify();
     }
 
@@ -45,17 +48,11 @@ export class SlotViewModel {
             this.stopRequested = false;
             this.notify();
 
-            // если авто-режим включён и остались спины
             if (this.autoSpinsRemaining > 0) {
                 this.autoSpinsRemaining--;
                 this.startSpin();
             }
         }, 1000);
-    }
-
-    setBet(value: number) {
-        this.model.setBet(value);
-        this.notify();
     }
 
     startAuto(spins: number) {
@@ -66,6 +63,11 @@ export class SlotViewModel {
 
     stopAuto() {
         this.autoSpinsRemaining = 0;
+    }
+
+    setBet(value: number) {
+        this.model.setBet(value);
+        this.notify();
     }
 
     get balance() {
@@ -80,4 +82,3 @@ export class SlotViewModel {
         return this.model.lastWin;
     }
 }
-

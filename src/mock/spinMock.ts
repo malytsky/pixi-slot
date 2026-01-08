@@ -1,14 +1,19 @@
-export function mockSpin(bet:number) {
+export function mockSpin(bet: number): SpinResult {
     const SYMBOLS = ['A', 'B', 'C', 'D', 'E'];
     function randomSymbol() {
         return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
     }
+
     return {
         win: Math.random() > 0.7 ? bet * 5 : 0,
-        reel0: [randomSymbol(), randomSymbol(),, randomSymbol()],
-        reel1: [randomSymbol(), randomSymbol(),, randomSymbol()],
-        reel2: [randomSymbol(), randomSymbol(),, randomSymbol()],
-        reel3: [randomSymbol(), randomSymbol(),, randomSymbol()],
-        reel4: [randomSymbol(), randomSymbol(),, randomSymbol()],
+        reels: Array.from({ length: 5 }, () =>
+            [randomSymbol(), randomSymbol(), randomSymbol()]
+        ),
     };
 }
+
+
+export type SpinResult = {
+    win: number;
+    reels: string[][];
+};
