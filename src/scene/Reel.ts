@@ -77,7 +77,6 @@ export class Reel {
                     s.y += this.speed;
                 }
             } else {
-                // 🔴 КРИТИЧЕСКИ ВАЖНО — нормализация координат
                 for (const s of this.symbols) {
                     if (s.y >= (ROWS + 1) * SYMBOL_HEIGHT) {
                         s.y -= (ROWS + 2) * SYMBOL_HEIGHT;

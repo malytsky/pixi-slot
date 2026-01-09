@@ -56,8 +56,8 @@ export class SlotUI {
     // ── События ──
     this.autoBtn.addEventListener('click', () => vm.startAuto(5));
     this.autoStopBtn.addEventListener('click', () => vm.stopAuto());
-    this.spinBtn.addEventListener('click', () => vm.startSpin());
-    this.stopBtn.addEventListener('click', () => vm.stopSpin());
+    this.spinBtn.addEventListener('click', () => vm.requestSpin());
+    this.stopBtn.addEventListener('click', () => vm.requestStop());
     this.betSelect.addEventListener('change', () => {
       vm.setBet(Number(this.betSelect.value));
     });

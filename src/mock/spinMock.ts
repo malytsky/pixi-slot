@@ -7,7 +7,7 @@ export function mockSpin(bet: number): SpinResult {
     return {
         win: Math.random() > 0.7 ? bet * 5 : 0,
         reels: Array.from({ length: 5 }, () =>
-            [randomSymbol(), randomSymbol(), randomSymbol()]
+            ["1", "2", "3"]
         ),
     };
 }

@@ -1,75 +1,21 @@
-import type {SlotModel} from "../domain/SlotModel";
+import { SlotModel } from '../domain/SlotModel';
 
 export type Phase = 'idle' | 'spinning' | 'showWin';
 
+type Subscriber = () => void;
+
 export class SlotViewModel {
-    private subscribers: (() => void)[] = [];
-    public model: SlotModel;
+    private subs: Subscriber[] = [];
 
     phase: Phase = 'idle';
+    win = 0;
+
+    autoLeft = 0;
     stopRequested = false;
 
-    private autoSpinsRemaining = 0;
+    constructor(public readonly model: SlotModel) {}
 
-    constructor(model: SlotModel) {
-        this.model = model;
-    }
-
-    subscribe(fn: () => void) {
-        this.subscribers.push(fn);
-    }
-
-    private notify() {
-        this.subscribers.forEach(fn => fn());
-    }
-
-    startSpin() {
-        if (this.phase !== 'idle') return;
-
-        this.model.takeBet();
-        this.stopRequested = false;
-        this.phase = 'spinning';
-        this.notify();
-    }
-
-    stopSpin() {
-        if (this.phase !== 'spinning') return;
-        this.stopRequested = true;
-        this.notify();
-    }
-
-    finishSpin(win: number) {
-        this.model.applyWin(win);
-        this.phase = 'showWin';
-        this.notify();
-
-        setTimeout(() => {
-            this.phase = 'idle';
-            this.stopRequested = false;
-            this.notify();
-
-            if (this.autoSpinsRemaining > 0) {
-                this.autoSpinsRemaining--;
-                this.startSpin();
-            }
-        }, 1000);
-    }
-
-    startAuto(spins: number) {
-        if (this.phase !== 'idle') return;
-        this.autoSpinsRemaining = spins;
-        this.startSpin();
-    }
-
-    stopAuto() {
-        this.autoSpinsRemaining = 0;
-    }
-
-    setBet(value: number) {
-        this.model.setBet(value);
-        this.notify();
-    }
-
+    // ─── getters для UI ───
     get balance() {
         return this.model.balance;
     }
@@ -78,7 +24,64 @@ export class SlotViewModel {
         return this.model.bet;
     }
 
-    get win() {
-        return this.model.lastWin;
+    // ─── UI intents ───
+    requestSpin() {
+        if (this.phase !== 'idle') return;
+        this.phase = 'spinning';
+        this.stopRequested = false;
+        this.notify();
+    }
+
+    requestStop() {
+        this.stopRequested = true;
+        this.notify();
+    }
+
+    startAuto(count: number) {
+        if (this.phase !== 'idle') return;
+        this.autoLeft = count;
+        this.requestSpin();
+    }
+
+    stopAuto() {
+        this.autoLeft = 0;
+    }
+
+    // ─── scene callbacks ───
+    applyWin(win: number) {
+        this.win = win;
+        this.model.applyWin(win);
+        this.phase = 'showWin';
+        this.notify();
+    }
+
+    finishShowWin() {
+        this.phase = 'idle';
+
+        if (this.autoLeft > 0) {
+            this.autoLeft--;
+            this.notify();
+            this.requestSpin();
+        } else {
+            this.notify();
+        }
+    }
+
+    takeBet() {
+        this.model.takeBet();
+    }
+
+    setBet(value: number) {
+        this.model.setBet(value);
+        this.notify();
+    }
+
+    // ─── subscribe ───
+    subscribe(fn: Subscriber) {
+        this.subs.push(fn);
+    }
+
+    private notify() {
+        this.subs.forEach(s => s());
     }
 }
